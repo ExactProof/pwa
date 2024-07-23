@@ -104,6 +104,7 @@ const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState<string>('');
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -111,7 +112,22 @@ const App: React.FC = () => {
       setTodos(todosFromDB);
     };
     fetchTodos();
+
+    if (typeof window !== "undefined") {
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'ja-JP';
+      recognition.onresult = (event) => {
+        setNewTodo(event.results[0][0].transcript);
+      };
+      setRecognition(recognition);
+    }
   }, []);
+
+  const startVoiceInput = () => {
+    recognition?.start();
+  };
 
   const addNewTodo = async () => {
     if (newTodo.trim()) {
@@ -143,44 +159,18 @@ const App: React.FC = () => {
     setTodos(todosFromDB);
   };
 
-  //   return (
-  //   <div className="App">
-  //     <header className="App-header">
-  //       <h1>TODO App</h1>
-  //       <input
-  //         type="text"
-  //         value={newTodo}
-  //         onChange={e => setNewTodo(e.target.value)}
-  //       />
-  //       <button onClick={editingTodo ? updateExistingTodo : addNewTodo}>
-  //         {editingTodo ? 'Update TODO' : 'Add TODO'}
-  //       </button>
-  //       <ul>
-  //         {todos.map(todo => (
-  //           <li key={todo.id}>
-  //             {todo.text}
-  //             <button onClick={() => editTodo(todo)}>Edit</button>
-  //             <button onClick={() => deleteExistingTodo(todo.id)}>Delete</button>
-  //           </li>
-  //         ))}
-  //       </ul>
-  //     </header>
-  //   </div>
-  // );
-
   return (
     <AppContainer>
       <Header>TODO App</Header>
-      {/* <div> */}
-        <TodoInput
-          type="text"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-        />
-        <AddButton onClick={editingTodo ? updateExistingTodo : addNewTodo}>
-          {editingTodo ? 'Update TODO' : 'Add TODO'}
-        </AddButton>
-      {/* </div> */}
+      <TodoInput
+        type="text"
+        value={newTodo}
+        onChange={(e) => setNewTodo(e.target.value)}
+      />
+      <AddButton onClick={editingTodo ? updateExistingTodo : addNewTodo}>
+        {editingTodo ? 'Update TODO' : 'Add TODO'}
+      </AddButton>
+      <button onClick={startVoiceInput}>🎤</button>
       <TodoList>
           {todos.map((todo) => (
             <TodoItem key={todo.id}>
